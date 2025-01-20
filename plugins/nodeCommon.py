@@ -85,10 +85,9 @@ logger = logging.getLogger('my_logger')
 # logger.critical('这是一个严重错误')
 
 # base url中禁止出现下面的根域名
-BLACK_DOMAIN = ['acronis.com', 'acronis.work', 'aax.com', 'htc.com', 'airtable.com', 'apple.com', 'arrival.com', 'aliyuncs.com',
-                'videolan.org', 'alicdn.com', 'ucweb.com', '127.0.0.1', 'google.com']
+BLACK_DOMAIN = ['127.0.0.1']
 # base url中的host禁止出现下面的聂荣
-BLACK_URL = ['fourier.taobao.com', '127.0.0.1', 'passport.baidu.com']
+BLACK_URL = ['127.0.0.1']
 
 # 响应包禁止出现的内容
 # BLACK_TEXT = ['''<RecommendDoc>https://api.aliyun.com''', 'FAIL_SYS_API_NOT_FOUNDED::请求API不存在', '"未找到API注册信息"', '"miss header param x-ca-key"', '"message":"No message available"']

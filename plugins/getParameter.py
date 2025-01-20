@@ -51,7 +51,7 @@ def extract_info_from_nested_data(data, current_depth=1, target_depth=2):
         for key, value in data.items():
             # 如果键是'param'或'parameter'且值为字符串，将该值添加到参数列表中
             if key in ['param', 'parameter'] and isinstance(value, str):
-                print(f"1111111:{value}")
+                # print(f"1111111:{value}")
                 params.append(value)
             # 如果值是字典或列表，递归调用此函数以深入处理
             if isinstance(value, (dict, list)):
