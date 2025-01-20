@@ -18,7 +18,7 @@
 
 功能：通过提取自动加载和静态地址中的JS和页面内容，解析Webpack打包和使用正则匹配技术，发现API接口及Base URL。针对提取的接口，通过Fuzz测试、无参和有参请求三种方式验证接口响应，进一步智能提取参数并对其进行动态测试。支持各版本Swagger解析，自动识别危险接口，结合十余种Bypass技术绕过常见限制，全面挖掘未授权访问、远程命令执行、文件上传等漏洞。所有数据统一存储至文本、Excel中，重点关注接口响应的差异性和敏感信息泄漏情况，为漏洞发现提供数据支持。
 
-调用：项目参考了[jjjjjjjjjjjjjs](https://github.com/ttstormxx/jjjjjjjjjjjjjs)的部分思路，规则借用了[HaE](https://gh0st.cn/HaE/)和[wih](https://tophanttechnology.github.io/ARL-doc/function_desc/web_info_hunter/)。感谢jjjjjjjjjjjjjs、hae和win作者
+调用：项目参考了[jjjjjjjjjjjjjs](https://github.com/ttstormxx/jjjjjjjjjjjjjs)的部分思路，规则借用了[HaE](https://gh0st.cn/HaE/)和[wih](https://tophanttechnology.github.io/ARL-doc/function_desc/web_info_hunter/)。感谢jjjjjjjjjjjjjs、hae和wih作者
 
 ## 0x02 安装
 
