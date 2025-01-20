@@ -73,7 +73,7 @@ missingRegex=[
         ]
 
 # 配置日志记录器
-logging.basicConfig(filename='xiezhi_bounty.log', level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='ChkApi.log', level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # 创建一个日志记录器
 logger = logging.getLogger('my_logger')
