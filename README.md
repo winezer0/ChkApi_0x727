@@ -25,7 +25,7 @@
 为了避免踩坑,建议安装在如下环境中
 
 * python3.8及以上，建议VPS环境是ubuntu20，默认是python3.8。
-* 需要安装chromedriver，在build.sh里内置了安装命令
+* 需要安装chromedriver，在build.sh里内置了安装命令（默认是Linux版本的，如果是Mac电脑则自己安装下）
 
 ```
 chmod 777 build.sh
