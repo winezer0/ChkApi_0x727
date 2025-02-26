@@ -1,28 +1,27 @@
-import os
-from collections import defaultdict
-from hashlib import sha256
 import shutil
-
-import yaml
+from hashlib import sha256
+from plugins.fileUtils import loadYaml
+from collections import defaultdict
 
 try:
     from plugins.nodeCommon import *
 except Exception as e:
     from nodeCommon import *
 
-try:
-    with open('./plugins/rule.yaml', 'r') as file:
-        hae_rule = yaml.safe_load(file)
-except Exception as e:
-    with open('./rule.yaml', 'r') as file:
-        hae_rule = yaml.safe_load(file)
+rule_yaml = './plugins/rule.yaml'
+rule_yaml2 = './rule.yaml'
+hae_rule = loadYaml(rule_yaml) or loadYaml(rule_yaml2)
+if not hae_rule:
+    print(f"not load hae_rule in {rule_yaml} and {rule_yaml2}")
+    exit()
 
-try:
-    with open('./plugins/sensitive_data_rule.yaml', 'r') as file:
-        sensitive_data_rule = yaml.safe_load(file)
-except Exception as e:
-    with open('./sensitive_data_rule.yaml', 'r') as file:
-        sensitive_data_rule = yaml.safe_load(file)
+rule_yaml = './plugins/sensitive_data_rule.yaml'
+rule_yaml2 = './sensitive_data_rule.yaml'
+sensitive_data_rule = loadYaml(rule_yaml) or loadYaml(rule_yaml2)
+if not sensitive_data_rule:
+    print(f"not load sensitive_data_rule in {rule_yaml} and {rule_yaml2}")
+    exit()
+
 
 # 差异化response
 def diff_response_api(folder_path, filePath_url_info):

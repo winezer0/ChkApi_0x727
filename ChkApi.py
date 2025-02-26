@@ -13,9 +13,11 @@ from plugins.apiUrlReqWithParameter import *
 from plugins.disposeResults import *
 import tldextract
 
+
 def get_base_domain(url):
     ext = tldextract.extract(url)
     return ext.domain
+
 
 def filter_base_urls(base_domain, url):
     # ip则直接返回
@@ -50,6 +52,7 @@ def indexJsFind(url, cookies):
     except Exception as e:
         return all_load_url
 
+
 def filter_data(base_domain, all_load_url, all_api_paths):
     """
     从提供的 URL 数据和 API 路径数据中提取并构建基本的 URL 列表。
@@ -73,7 +76,6 @@ def filter_data(base_domain, all_load_url, all_api_paths):
     path_with_api_paths = []
     # 从all_api_paths提取出没有api字符串的接口
     path_with_no_api_paths = []
-
 
     '''
     自动加载有：http://x.x.x.x:8082/prod-api/auth/tenant/list
@@ -115,11 +117,13 @@ def filter_data(base_domain, all_load_url, all_api_paths):
             # 截获base_url, 例如自动加载了https://x.x.x.x/dddd/eee/fff，js获取到的api_path接口有/eee/fff，则base_url为https://x.x.x.x/dddd
             else:
                 for api in all_api_paths:
-                    if api['url_type'] == 'api_path' and api['api_path'] != '/' and not api['api_path'].startswith('http') and len(api['api_path']) > 2 and url_parse.path != api['api_path']:
+                    if api['url_type'] == 'api_path' and api['api_path'] != '/' and not api['api_path'].startswith(
+                            'http') and len(api['api_path']) > 2 and url_parse.path != api['api_path']:
                         url_parse = urlparse(item['url'])
                         api_index = url_parse.path.find(api['api_path'])
                         if api_index != -1:
-                            base_url = f"{url_parse.scheme}://{url_parse.netloc}{url_parse.path[:api_index]}".rstrip('/')
+                            base_url = f"{url_parse.scheme}://{url_parse.netloc}{url_parse.path[:api_index]}".rstrip(
+                                '/')
                             # base_url = item['url'][:api_index]  # 在 API 路径开始的地方截断 URL
                             if not is_blacklisted(base_url) and urlparse(base_url).path:
                                 logger_print_content(f'[截获] {base_url}')
@@ -142,7 +146,7 @@ def filter_data(base_domain, all_load_url, all_api_paths):
         #     continue
 
         api_path = api['api_path']
-        if api['url_type'] == 'api_path' and api_path != '/' and not api_path.startswith('http') and len(api_path) > 2 :
+        if api['url_type'] == 'api_path' and api_path != '/' and not api_path.startswith('http') and len(api_path) > 2:
             path_parse = urlparse(api_path)
             # print(api['api_path'], path_parse)
             api_path_index = api_path.find('api/')
@@ -151,8 +155,7 @@ def filter_data(base_domain, all_load_url, all_api_paths):
                 path_with_api_paths.append(path_with_api_path)
                 # print(f"path_with_api_path = {path_with_api_path}")
 
-
-                path_with_no_api_path = f"/{api_path[api_path_index+4:]}"
+                path_with_no_api_path = f"/{api_path[api_path_index + 4:]}"
                 path_with_no_api_paths.append(path_with_no_api_path)
                 # print(f"path_with_no_api_path = {path_with_no_api_path}")
             else:
@@ -181,7 +184,8 @@ def filter_data(base_domain, all_load_url, all_api_paths):
             # print(path_with_api_url)
             all_path_with_api_urls.append(path_with_api_url)
     all_path_with_api_urls = list(set(all_path_with_api_urls))
-    logger_print_content(f"根路径和base路径拼接js匹配出来的API字符串接口 {len(all_path_with_api_urls)} all_path_with_api_urls = {all_path_with_api_urls}")
+    logger_print_content(
+        f"根路径和base路径拼接js匹配出来的API字符串接口 {len(all_path_with_api_urls)} all_path_with_api_urls = {all_path_with_api_urls}")
     api_urls = []
     for _1 in all_path_with_api_urls:
         for _2 in path_with_no_api_paths:
@@ -213,10 +217,12 @@ def save_list_to_excel(excelSavePath, excel, title, list_result):
     sheet = saveToExcel(excelSavePath, excel, title)
     sheet.save_list_to_excel(title, list_result)
 
+
 def save_dict_to_excel(excelSavePath, excel, title, list_dict_result):
     sheet = saveToExcel(excelSavePath, excel, title)
     if list_dict_result:
         sheet.save_dict_to_excel(list_dict_result)
+
 
 # 第八步：处理结果
 def deal_results(excelSavePath, excel, folder_path, filePath_url_info):
@@ -228,7 +234,8 @@ def deal_results(excelSavePath, excel, folder_path, filePath_url_info):
         f9.writelines(f"disposeResults_info = {disposeResults_info}\n")
 
     diff_response_info = disposeResults_info['diff_response_info']
-    diff_response_info_dict = [{"content_hash": _[0], "length": _[1], "size": _[2], "url": _[3], "path": _[4]} for _ in diff_response_info]
+    diff_response_info_dict = [{"content_hash": _[0], "length": _[1], "size": _[2], "url": _[3], "path": _[4]} for _ in
+                               diff_response_info]
     save_dict_to_excel(excelSavePath, excel, '响应包diff_hash', diff_response_info_dict)
 
     hae_api_info = disposeResults_info['hae_api_info']
@@ -236,12 +243,14 @@ def deal_results(excelSavePath, excel, folder_path, filePath_url_info):
     save_dict_to_excel(excelSavePath, excel, 'hae检测结果', hae_api_info_dict)
 
     sensitive_data_info = disposeResults_info['sensitive_data_info']
-    sensitive_data_info_dict = [{"name": _[0], "matches": str(_[1]), "url": _[2], "file": _[3]} for _ in sensitive_data_info]
+    sensitive_data_info_dict = [{"name": _[0], "matches": str(_[1]), "url": _[2], "file": _[3]} for _ in
+                                sensitive_data_info]
     save_dict_to_excel(excelSavePath, excel, '敏感信息检测结果', sensitive_data_info_dict)
 
     return disposeResults_info
 
-def run_url(url, cookies, chrome, attackType, noApiScan):
+
+def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path):
     js_paths = []
     static_paths = []
 
@@ -292,7 +301,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
     # 第一步先获取该页面加载了哪些js和base url
     if chrome == 'on':
         logger_print_content(f"第一步:调用webdriver获取{url}加载的js和no_js url")
-        all_load_url = webdriverFind(url, cookies)
+        all_load_url = webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path)
         logger_print_content(f"[*] all_load_url = {all_load_url}")
     else:
         logger_print_content(f"第一步:访问{url}获取js和no_js url")
@@ -321,13 +330,16 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
     save_list_to_excel(excelSavePath, excel, '首页自动加载的JS_URL列表', js_load_urls)
     save_list_to_excel(excelSavePath, excel, '首页自动加载的属于目标的非JS_URL列表', no_js_load_urls)
 
-    with open(f'{folder_path}/1-1首页自动加载的所有URL列表.txt', 'at', encoding='utf-8') as f1, open(f'{folder_path}/1-2首页自动加载的JS_URL列表.txt', 'at', encoding='utf-8') as f2, open(f'{folder_path}/1-3首页自动加载的属于目标的非JS_URL列表.txt', 'at', encoding='utf-8') as f3, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+    with open(f'{folder_path}/1-1首页自动加载的所有URL列表.txt', 'at', encoding='utf-8') as f1, open(
+            f'{folder_path}/1-2首页自动加载的JS_URL列表.txt', 'at', encoding='utf-8') as f2, open(
+        f'{folder_path}/1-3首页自动加载的属于目标的非JS_URL列表.txt', 'at', encoding='utf-8') as f3, open(
+        f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
         f9.writelines(f"url = {url}\n")
         f9.writelines(f"cookies = {cookies}\n")
         f9.writelines(f"all_load_url = {all_load_url}\n")
         f9.writelines(f"js_load_urls = {js_load_urls}\n")
         f9.writelines(f"no_js_load_urls = {no_js_load_urls}\n")
-        f9.writelines(f"-"*100 + '\n')
+        f9.writelines(f"-" * 100 + '\n')
         for load_url in all_load_url:
             f1.writelines(f"{load_url}\n")
         for js_url in js_load_urls:
@@ -341,8 +353,10 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
     js_find_urls = []
     # js_urls = js_load_urls
     # base_urls = base_load_urls
-    js_and_staticUrl_info, js_and_staticUrl_alive_info = js_find_api(domain, js_load_urls + no_js_load_urls, cookies, folder_path, filePath_url_info)
-    logger_print_content(f"[*] 第二步访问加载的js和base url，提取出新的js和static url\n[*] js_and_staticUrl_info = {js_and_staticUrl_info}")
+    js_and_staticUrl_info, js_and_staticUrl_alive_info = js_find_api(domain, js_load_urls + no_js_load_urls, cookies,
+                                                                     folder_path, filePath_url_info)
+    logger_print_content(
+        f"[*] 第二步访问加载的js和base url，提取出新的js和static url\n[*] js_and_staticUrl_info = {js_and_staticUrl_info}")
     for _ in js_and_staticUrl_alive_info:
         if _['url_type'] == 'js_url':
             js_find_urls.append(_['url'])
@@ -364,7 +378,11 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
     save_list_to_excel(excelSavePath, excel, '所有存活的静态url', all_alive_staticUrl)
     save_list_to_excel(excelSavePath, excel, '所有存活的js和静态url', all_alive_js_and_staticUrl)
 
-    with open(f'{folder_path}/2-1-提取出的js路径.txt', 'at', encoding='utf-8') as f, open(f'{folder_path}/2-2-所有存活的js(自动加载的js和拼接的js).txt', 'at', encoding='utf-8') as f2, open(f'{folder_path}/2-3-所有存活的静态url.txt', 'at', encoding='utf-8') as f3, open(f'{folder_path}/2-4-所有存活的js和静态url.txt', 'at', encoding='utf-8') as f4, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+    with open(f'{folder_path}/2-1-提取出的js路径.txt', 'at', encoding='utf-8') as f, open(
+            f'{folder_path}/2-2-所有存活的js(自动加载的js和拼接的js).txt', 'at', encoding='utf-8') as f2, open(
+        f'{folder_path}/2-3-所有存活的静态url.txt', 'at', encoding='utf-8') as f3, open(
+        f'{folder_path}/2-4-所有存活的js和静态url.txt', 'at', encoding='utf-8') as f4, open(f'{folder_path}/所有变量列表.txt',
+                                                                                    'at', encoding='utf-8') as f9:
         # f9.writelines(f"js_urls = {[url] + js_load_urls}\n")
         f9.writelines(f"js_and_staticUrl_alive_info = {js_and_staticUrl_alive_info}\n")
         f9.writelines(f"js_and_staticUrl_info = {js_and_staticUrl_info}\n")
@@ -375,7 +393,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
         f9.writelines(f"all_alive_staticUrl = {all_alive_staticUrl}\n")
         f9.writelines(f"all_alive_js_and_staticUrl = {all_alive_js_and_staticUrl}\n")
         f9.writelines(f"all_js_urls = {all_js_urls}\n")
-        f9.writelines(f"-"*100 + '\n')
+        f9.writelines(f"-" * 100 + '\n')
 
         for js_path in js_and_staticUrl_info['js_paths']:
             js_paths.append(js_path)
@@ -403,15 +421,14 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
         logger_print_content(f"[*] 所有api接口\n[*] all_api_paths = {all_api_paths}")
 
         save_dict_to_excel(excelSavePath, excel, '从所有js里获取到的API_PATH列表', all_api_paths)
-        with open(f'{folder_path}/3-从所有js里获取到的API_PATH列表.txt', 'at', encoding='utf-8') as f, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+        with open(f'{folder_path}/3-从所有js里获取到的API_PATH列表.txt', 'at', encoding='utf-8') as f, open(
+                f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
             for api_path in all_api_paths:
                 f.writelines(f"{api_path}\n")
             f9.writelines(f"all_api_paths = {all_api_paths}\n")
 
-
         # 第四步梳理: API接口，整理出所有的API URL
         api_info = filter_data(base_domain, all_load_url, all_api_paths)
-
 
         save_list_to_excel(excelSavePath, excel, '从自动加载的URL里提取出来的根路径', api_info['tree_urls'])
         save_list_to_excel(excelSavePath, excel, '从自动加载的URL里提取出来的BASE_URL', api_info['base_urls'])
@@ -420,7 +437,13 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
         save_list_to_excel(excelSavePath, excel, '没有API字符串的接口', api_info['path_with_no_api_paths'])
         save_list_to_excel(excelSavePath, excel, '组合出来的最终的所有API_URL', api_info['api_urls'])
 
-        with open(f'{folder_path}/4-1-从自动加载的URL里提取出来的根路径.txt', 'at', encoding='utf-8') as f, open(f'{folder_path}/4-2-从自动加载的URL里提取出来的BASE_URL.txt', 'at', encoding='utf-8') as f2, open(f'{folder_path}/4-3-带有API字符串接口的url.txt', 'at', encoding='utf-8') as f3, open(f'{folder_path}/4-4-带有API字符串的接口.txt', 'at', encoding='utf-8') as f4, open(f'{folder_path}/4-5-没有API字符串的接口.txt', 'at', encoding='utf-8') as f5, open(f'{folder_path}/4-6-组合出来的最终的所有API_URL.txt', 'at', encoding='utf-8') as f6, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+        with open(f'{folder_path}/4-1-从自动加载的URL里提取出来的根路径.txt', 'at', encoding='utf-8') as f, open(
+                f'{folder_path}/4-2-从自动加载的URL里提取出来的BASE_URL.txt', 'at', encoding='utf-8') as f2, open(
+            f'{folder_path}/4-3-带有API字符串接口的url.txt', 'at', encoding='utf-8') as f3, open(
+            f'{folder_path}/4-4-带有API字符串的接口.txt', 'at', encoding='utf-8') as f4, open(
+            f'{folder_path}/4-5-没有API字符串的接口.txt', 'at', encoding='utf-8') as f5, open(
+            f'{folder_path}/4-6-组合出来的最终的所有API_URL.txt', 'at', encoding='utf-8') as f6, open(
+            f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
             f9.writelines(f"api_info = {api_info}\n")
             f9.writelines(f"tree_urls = {api_info['tree_urls']}\n")
             f9.writelines(f"base_urls = {api_info['base_urls']}\n")
@@ -428,7 +451,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
             f9.writelines(f"path_with_no_api_paths = {api_info['path_with_no_api_paths']}\n")
             f9.writelines(f"all_path_with_api_urls = {api_info['all_path_with_api_urls']}\n")
             f9.writelines(f"api_urls = {api_info['api_urls']}\n")
-            f9.writelines(f"-"*100 + '\n')
+            f9.writelines(f"-" * 100 + '\n')
 
             for tree_url in api_info['tree_urls']:
                 f.writelines(f"{tree_url}\n")
@@ -448,8 +471,6 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
             for api_url in api_info['api_urls']:
                 f6.writelines(f"{api_url}\n")
 
-
-
         if attackType == 0:
             api_urls = api_info['api_urls']
 
@@ -461,12 +482,14 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
             logger_print_content(f"第五步：无参三种形式请求所有API接口")
             api_url_res = apiUrlReqNoParameter_api(url, api_urls, cookies, folder_path, filePath_url_info)
 
-
             # 非404，xml和json的api接口
             xml_json_api_url = []
-            with open(f'{folder_path}/5-1-无参三种形式请求API接口响应结果.txt', 'at', encoding='utf-8') as f1, open(f'{folder_path}/5-2-XML_JSON的API_URL列表.txt', 'at', encoding='utf-8') as f2, open(f'{folder_path}/5-3-XML_JSON的API_URL无参的RESPONSE结果.txt', 'at', encoding='utf-8') as f3, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+            with open(f'{folder_path}/5-1-无参三种形式请求API接口响应结果.txt', 'at', encoding='utf-8') as f1, open(
+                    f'{folder_path}/5-2-XML_JSON的API_URL列表.txt', 'at', encoding='utf-8') as f2, open(
+                f'{folder_path}/5-3-XML_JSON的API_URL无参的RESPONSE结果.txt', 'at', encoding='utf-8') as f3, open(
+                f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
                 f9.writelines(f"无参 api_url_res = {api_url_res}\n")
-                f9.writelines(f"-"*100)
+                f9.writelines(f"-" * 100)
                 for _ in api_url_res:
                     f1.writelines(f"{_}\n")
                     if _['res_code'] == 200 and ('xml' in _['res_type'] or 'json' in _['res_type']):
@@ -484,22 +507,26 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
             logger_print_content(f"第六步：提取参数")
             parameters = getParameter_api(folder_path)
             save_list_to_excel(excelSavePath, excel, '提取的所有参数', parameters)
-            with open(f'{folder_path}/6-提取的所有参数.txt', 'at', encoding='utf-8') as f, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+            with open(f'{folder_path}/6-提取的所有参数.txt', 'at', encoding='utf-8') as f, open(f'{folder_path}/所有变量列表.txt',
+                                                                                         'at', encoding='utf-8') as f9:
                 f9.writelines(f"parameters = {parameters}\n")
-                f9.writelines(f"-"*100 + '\n')
+                f9.writelines(f"-" * 100 + '\n')
                 for parameter in parameters:
                     f.writelines(f"{parameter}\n")
 
             # 第七步：携带参数请求
             if parameters:
                 logger_print_content(f"第七步：有参三种形式请求所有API接口")
-                api_url_res = apiUrlReqWithParameter_api(url, xml_json_api_url, cookies, folder_path, parameters, filePath_url_info)
+                api_url_res = apiUrlReqWithParameter_api(url, xml_json_api_url, cookies, folder_path, parameters,
+                                                         filePath_url_info)
                 save_dict_to_excel(excelSavePath, excel, '有参三种形式请求XML_JSON的API接口响应结果', api_url_res)
 
-                with open(f'{folder_path}/7-1-有参三种形式请求XML_JSON的API接口响应结果.txt', 'at', encoding='utf-8') as f1, open(f'{folder_path}/7-2-XML_JSON的API_URL有参的RESPONSE结果.txt', 'at', encoding='utf-8') as f3, open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
+                with open(f'{folder_path}/7-1-有参三种形式请求XML_JSON的API接口响应结果.txt', 'at', encoding='utf-8') as f1, open(
+                        f'{folder_path}/7-2-XML_JSON的API_URL有参的RESPONSE结果.txt', 'at', encoding='utf-8') as f3, open(
+                    f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
                     f9.writelines(f"xml_json_api_url = {xml_json_api_url}\n")
                     f9.writelines(f"有参 api_url_res = {api_url_res}\n")
-                    f9.writelines(f"-"*100 + '\n')
+                    f9.writelines(f"-" * 100 + '\n')
                     for _ in api_url_res:
                         f1.writelines(f"{_}\n")
                         f3.writelines(f"{_}\n")
@@ -507,38 +534,40 @@ def run_url(url, cookies, chrome, attackType, noApiScan):
 
     disposeResults_info = deal_results(excelSavePath, excel, folder_path, filePath_url_info)
 
-
     getJsUrl_info = {
-        "all_load_urls": all_load_url,                                   # 1-1首页自动加载的所有URL列表.txt
+        "all_load_urls": all_load_url,  # 1-1首页自动加载的所有URL列表.txt
         # "js_load_urls": js_load_urls,                                    # 1-2首页自动加载的JS_URL列表.txt
         # "no_js_load_urls": no_js_load_urls,                              # 1-3首页自动加载的属于目标的非JS_URL列表.txt
         #
         # "all_js_urls": all_js_urls,                                      # 2-1-所有存活的js路径-自动加载的js和拼接的js.txt
         # "js_paths": js_and_staticUrl_info['js_paths'],                   # 2-2-提取出的js路径.txt
         # "static_paths": js_and_staticUrl_info['static_paths'],           # 2-3-提取出的静态url路径.txt
-        "js_and_staticUrl_alive_info": js_and_staticUrl_alive_info,      # 2-4-存活的js和静态URL.txt
+        "js_and_staticUrl_alive_info": js_and_staticUrl_alive_info,  # 2-4-存活的js和静态URL.txt
 
-        "all_api_paths": all_api_paths,                                  # 3-从所有js里获取到的API_PATH列表.txt
+        "all_api_paths": all_api_paths,  # 3-从所有js里获取到的API_PATH列表.txt
 
-        "tree_urls" : api_info['tree_urls'],                             # 4-1-从自动加载的URL里提取出来的根路径.txt
-        "base_urls": api_info['base_urls'],                              # 4-2-从自动加载的URL里提取出来的BASE_URL.txt
-        "all_path_with_api_urls": api_info['all_path_with_api_urls'],    # 4-3-从自动加载的URL里提取出来的路径带有api字符串的URL.txt
-        "path_with_api_paths": api_info['path_with_api_paths'],          # 4-4-从所有js里获取到的路径里有API字符串的接口列表.txt
-        "path_with_no_api_paths": api_info['path_with_no_api_paths'],    # 4-5-从所有js里获取到的路径里没有API字符串的接口列表.txt
+        "tree_urls": api_info['tree_urls'],  # 4-1-从自动加载的URL里提取出来的根路径.txt
+        "base_urls": api_info['base_urls'],  # 4-2-从自动加载的URL里提取出来的BASE_URL.txt
+        "all_path_with_api_urls": api_info['all_path_with_api_urls'],  # 4-3-从自动加载的URL里提取出来的路径带有api字符串的URL.txt
+        "path_with_api_paths": api_info['path_with_api_paths'],  # 4-4-从所有js里获取到的路径里有API字符串的接口列表.txt
+        "path_with_no_api_paths": api_info['path_with_no_api_paths'],  # 4-5-从所有js里获取到的路径里没有API字符串的接口列表.txt
         # "api_urls": [],                                                # 4-6-组合出来的最终的所有API_URL.txt
 
-        "parameters": parameters,                                        # 6-提取的所有参数.txt
+        "parameters": parameters,  # 6-提取的所有参数.txt
 
-        "all_api_url_xml_json_res": all_api_url_xml_json_res,            # 5-3-XML_JSON的API_URL无参的RESPONSE结果.txt 和 7-2-XML_JSON的API_URL有参的RESPONSE结果.txt
+        "all_api_url_xml_json_res": all_api_url_xml_json_res,
+        # 5-3-XML_JSON的API_URL无参的RESPONSE结果.txt 和 7-2-XML_JSON的API_URL有参的RESPONSE结果.txt
 
         "disposeResults_info": disposeResults_info,
     }
     with open(f'{folder_path}/所有变量列表.txt', 'at', encoding='utf-8') as f9:
         f9.writelines(f"getJsUrl_info = {getJsUrl_info}\n")
 
-    logger_print_content('------------------------------------------------------------------------------------------------------------------------------------')
+    logger_print_content(
+        '------------------------------------------------------------------------------------------------------------------------------------')
 
     return getJsUrl_info
+
 
 def main():
     usage = '\n\t' \
@@ -552,19 +581,27 @@ def main():
     parse.add_option('-u', '--url', dest='url', type='str', help='要跑的目标url')
     parse.add_option('-c', '--cookies', dest='cookies', type='str', help='cookies')
     parse.add_option('-f', '--file', dest='file', type='str', help='file to scan')
-    parse.add_option('--chrome', dest='chrome', type='str', default='on', help='off关闭chromedriver，默认是on') #
-    parse.add_option('--at', dest='attackType', type='int', default=0, help='0 收集+探测\t1 收集\t默认是0')  # 0为收集api接口和请求API接口，1为收集API接口不请求API接口
-    parse.add_option('--na', dest='noApiScan', type='int', default=0, help='不扫描API接口漏洞，1不扫描，0扫描，默认是0') # 0为js扫描，1为js+api扫描
+    parse.add_option('--chrome', dest='chrome', type='str', default='on', help='off关闭chromedriver，默认是on')  #
+    parse.add_option('--at', dest='attackType', type='int', default=0,
+                     help='0 收集+探测\t1 收集\t默认是0')  # 0为收集api接口和请求API接口，1为收集API接口不请求API接口
+    parse.add_option('--na', dest='noApiScan', type='int', default=0,
+                     help='不扫描API接口漏洞，1不扫描，0扫描，默认是0')  # 0为js扫描，1为js+api扫描
+    # 指定 ChromeDriver 路径
+    parse.add_option('--dp', dest='chrome_driver_path', type='str', help='chrome_driver_path', default=r"chromedriver")
+    # 指定 Chrome 浏览器路径
+    # chrome_binary_path = r"C:\ISEC\0X01_Browser\Chrome\Chrome\chrome.exe"
+    parse.add_option('--cp', dest='chrome_binary_path', type='str', help='chrome_binary_path', default=r"chrome")
 
     options, args = parse.parse_args()
     url, cookies, file, chrome, attackType, noApiScan = options.url, options.cookies, options.file, options.chrome, options.attackType, options.noApiScan
-
+    chrome_driver_path, chrome_binary_path = options.chrome_driver_path, options.chrome_binary_path
     if url:
-        run_url(url, cookies, chrome, attackType, noApiScan)
+        run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path)
     elif file:
         with open(file, 'rt') as f:
             for url in f.readlines():
-                run_url(url.strip(), cookies, chrome, attackType, noApiScan)
+                run_url(url.strip(), cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path)
+
 
 if __name__ == '__main__':
     main()
