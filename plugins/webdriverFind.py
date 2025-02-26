@@ -8,16 +8,16 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+
 try:
     from plugins.nodeCommon import *
 except Exception as e:
     from nodeCommon import *
 
-
 warnings.filterwarnings("ignore")
 
 
-def create_webdriver(cookies, chrome_driver_path = r"chromedriver", chrome_binary_path = r"chrome"):
+def create_webdriver(cookies, chrome_driver_path=r"chromedriver", chrome_binary_path=r"chrome"):
     options = Options()
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -27,7 +27,6 @@ def create_webdriver(cookies, chrome_driver_path = r"chromedriver", chrome_binar
     options.add_argument('--ignore-certificate-errors')  # 忽略证书错误
     options.add_argument('--ignore-ssl-errors')  # 忽略SSL错误
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-
 
     options.binary_location = chrome_binary_path
 
@@ -49,6 +48,8 @@ def create_webdriver(cookies, chrome_driver_path = r"chromedriver", chrome_binar
         )
 
     return driver
+
+
 def check_network_url(url):
     if not url or url.count('?') > 1 or not url.startswith('http'):
         return False, ''
@@ -89,9 +90,9 @@ def get_final_url(driver, url):
     return driver.current_url
 
 
-def webdriverFind(url, cookies, chrome_driver_path , chrome_binary_path):
+def webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path):
     all_load_url = []
-    driver = create_webdriver(cookies, chrome_driver_path , chrome_binary_path)
+    driver = create_webdriver(cookies, chrome_driver_path, chrome_binary_path)
     try:
         final_url = get_final_url(driver, url)
         logger_print_content(f"最终跳转URL: {final_url}")
