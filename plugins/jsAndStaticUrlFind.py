@@ -6,10 +6,10 @@ try:
 except Exception as e:
     from nodeCommon import *
 
-
-domainblacklist=[
+domainblacklist = [
     "www.w3.org", "example.com", "github.com", "example.org", "www.google", "googleapis.com"
 ]
+
 
 def jsFilter(lst):
     tmp = []
@@ -38,16 +38,18 @@ def jsFilter(lst):
 def staticUrlFilter(domain, base_paths):
     tmp = []
     for base_path in base_paths:
-        if len(base_path) < 3 or base_path.endswith('.js') or any(ext in base_path.lower() for ext in staticUrlExtBlackList):
+        if len(base_path) < 3 or base_path.endswith('.js') or any(
+                ext in base_path.lower() for ext in staticUrlExtBlackList):
             continue
         elif 'http' in base_path:
-            if domain not in base_path :
+            if domain not in base_path:
                 pass
             else:
                 tmp.append(base_path)
         else:
             tmp.append(base_path)
     return list(set(tmp))
+
 
 def webpack_js_find(js_content):
     try:
@@ -77,6 +79,7 @@ def webpack_js_find(js_content):
         # print(e.args)
         return []
 
+
 def get_new_url(scheme, base, root_path, path):
     if path == "" or path == '//' or path == '/':
         return ''
@@ -97,24 +100,29 @@ def get_new_url(scheme, base, root_path, path):
     return new_url
 
 
-
-def js_and_staticUrl_find(i, headers, js_and_staticUrl_info, urls, domain, js_and_staticUrl_alive_info_tmp, folder_path, filePath_url_info):
+def js_and_staticUrl_find(i, headers, js_and_staticUrl_info, urls, domain, js_and_staticUrl_alive_info_tmp, folder_path,
+                          filePath_url_info, proxy_config):
     while not queue.empty():
         url = queue.get()
-        get_js_and_staticUrl(i, headers, js_and_staticUrl_info, url, urls, domain, js_and_staticUrl_alive_info_tmp, folder_path, filePath_url_info)
+        get_js_and_staticUrl(i, headers, js_and_staticUrl_info, url, urls, domain, js_and_staticUrl_alive_info_tmp,
+                             folder_path, filePath_url_info, proxy_config)
 
-def get_js_and_staticUrl(i, headers, js_and_staticUrl_info, url, urls, domain, js_and_staticUrl_alive_info_tmp, folder_path, filePath_url_info):
+
+def get_js_and_staticUrl(i, headers, js_and_staticUrl_info, url, urls, domain, js_and_staticUrl_alive_info_tmp,
+                         folder_path, filePath_url_info,
+                         proxy_config):
     try:
         # logger_print_content(f"[线程{i}] 剩下:{queue.qsize()} {url} 获取页面里的js url")
         # response = requests.head(url=url, headers=headers, timeout=TIMEOUT, verify=False, allow_redirects=False)
         # print(response.headers)
-        res = requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False, allow_redirects=False, stream=True)
+        res = requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False, allow_redirects=False, stream=True,
+                           proxies=proxy_config)
         code = res.status_code
         if code != 200:
             logger_print_content(f"[状态码非200，过滤掉] [{code}] {url}")
             return
 
-        Content_Disposition = res.headers.get('Content-Disposition')# 获取网页源代码
+        Content_Disposition = res.headers.get('Content-Disposition')  # 获取网页源代码
         logger_print_content(f"[Content-Disposition] {url} {Content_Disposition}")
         if Content_Disposition:
             if 'attachment' in Content_Disposition:
@@ -268,10 +276,7 @@ def get_js_and_staticUrl(i, headers, js_and_staticUrl_info, url, urls, domain, j
     # print("\n")
 
 
-
-
-
-def js_find_api(domain, urls, cookies, folder_path, filePath_url_info):
+def js_find_api(domain, urls, cookies, folder_path, filePath_url_info, proxy_config):
     try:
         os.makedirs(f"{folder_path}/js_response/")
     except Exception as e:
@@ -299,7 +304,9 @@ def js_find_api(domain, urls, cookies, folder_path, filePath_url_info):
 
     threads = []
     for i in range(300):
-        t = threading.Thread(target=js_and_staticUrl_find, args=(i, headers, js_and_staticUrl_info, urls, domain, js_and_staticUrl_alive_info_tmp, folder_path, filePath_url_info))
+        t = threading.Thread(target=js_and_staticUrl_find, args=(
+        i, headers, js_and_staticUrl_info, urls, domain, js_and_staticUrl_alive_info_tmp, folder_path,
+        filePath_url_info, proxy_config))
         threads.append(t)
         t.start()
         time.sleep(0.2)
@@ -318,11 +325,12 @@ def js_find_api(domain, urls, cookies, folder_path, filePath_url_info):
     for _1 in js_and_staticUrl_alive_info_tmp:
         for _2 in js_and_staticUrl_info['js_url'] + js_and_staticUrl_info['static_url']:
             if _1['url'] == _2['url']:
-                url, referer, url_type, code, length = _2['url'], _2['referer'], _2['url_type'], _1['code'], _1['length']
+                url, referer, url_type, code, length = _2['url'], _2['referer'], _2['url_type'], _1['code'], _1[
+                    'length']
                 if code != 404:
-                    js_and_staticUrl_alive_info.append({"url": url, "code": code, "length": length, "url_type": url_type, "referer": referer})
+                    js_and_staticUrl_alive_info.append(
+                        {"url": url, "code": code, "length": length, "url_type": url_type, "referer": referer})
                     break
-
 
     print(js_and_staticUrl_alive_info)
     return js_and_staticUrl_info, js_and_staticUrl_alive_info

@@ -9,17 +9,15 @@ except Exception as e:
     from nodeCommon import *
 
 rule_yaml = './plugins/rule.yaml'
-rule_yaml2 = './rule.yaml'
-hae_rule = loadYaml(rule_yaml) or loadYaml(rule_yaml2)
+hae_rule = loadYaml(rule_yaml)
 if not hae_rule:
-    print(f"not load hae_rule in {rule_yaml} and {rule_yaml2}")
+    print(f"not load hae_rule in {rule_yaml}")
     exit()
 
 rule_yaml = './plugins/sensitive_data_rule.yaml'
-rule_yaml2 = './sensitive_data_rule.yaml'
-sensitive_data_rule = loadYaml(rule_yaml) or loadYaml(rule_yaml2)
+sensitive_data_rule = loadYaml(rule_yaml)
 if not sensitive_data_rule:
-    print(f"not load sensitive_data_rule in {rule_yaml} and {rule_yaml2}")
+    print(f"not load sensitive_data_rule in {rule_yaml}")
     exit()
 
 
@@ -36,7 +34,8 @@ def diff_response_api(folder_path, filePath_url_info):
 
     # 文件用于存储哈希值、文件大小和文件名
     hash_file_path = os.path.join(f"{folder_path}/8-1-响应包diff_hash.txt")
-    with open(hash_file_path, 'wt', encoding='utf-8') as hash_file, open(f"./result.txt", 'at', encoding='utf-8') as result_file:
+    with open(hash_file_path, 'wt', encoding='utf-8') as hash_file, open(f"./result.txt", 'at',
+                                                                         encoding='utf-8') as result_file:
         for root, _, files in os.walk(f"{folder_path}/response"):
             for file in files:
                 # if file.startswith('GET'):
@@ -80,8 +79,8 @@ def diff_response_api(folder_path, filePath_url_info):
                     shutil.copy2(path, dest_path)  # 使用copy2以保留元数据
                     logger_print_content(f"文件 {path} 已复制到 {dest_path}")
 
-
     return diff_response_info
+
 
 # 过滤脏数据，结果归整
 def filter_dirty_pack_response_api(folder_path):
@@ -106,17 +105,19 @@ def filter_dirty_pack_response_api(folder_path):
                     with open(file, 'rt', encoding='utf-8') as f3:
                         text = f3.read().strip()
                         if not text:
-                           continue
+                            continue
                         flag = False
                         for balcktext in BLACK_TEXT:
                             if balcktext in text:
                                 flag = True
                                 break
                         if not flag:
-                            f2.writelines(f"[file] {file}\n{text}\n\n\n----------------------------------------------------------------------------------------------------\n")
+                            f2.writelines(
+                                f"[file] {file}\n{text}\n\n\n----------------------------------------------------------------------------------------------------\n")
                 except Exception as e:
                     logger_print_content(f'filter_dirty_pack_response_api Error: {e.args}')
         return pack_file
+
 
 def filter_dirty_pack_js_response_api(folder_path):
     def get_all_files():
@@ -140,11 +141,13 @@ def filter_dirty_pack_js_response_api(folder_path):
                     with open(file, 'rt', encoding='utf-8') as f3:
                         text = f3.read().strip()
                         if not text:
-                           continue
-                        f2.writelines(f"[file] {file}\n{text}\n\n\n----------------------------------------------------------------------------------------------------\n")
+                            continue
+                        f2.writelines(
+                            f"[file] {file}\n{text}\n\n\n----------------------------------------------------------------------------------------------------\n")
                 except Exception as e:
                     logger_print_content(f'Error: {e.args}')
         return pack_file
+
 
 # hae获取敏感数据
 def hae_api(folder_path, filePath_url_info):
@@ -195,6 +198,7 @@ def hae_api(folder_path, filePath_url_info):
         print(_)
     return hae_api_info
 
+
 def sensitive_data_api(folder_path, filePath_url_info):
     def get_all_files():
         all_files = []
@@ -244,6 +248,7 @@ def sensitive_data_api(folder_path, filePath_url_info):
     for _ in sensitive_data_info:
         print(_)
     return sensitive_data_info
+
 
 def disposeResults_api(folder_path, filePath_url_info):
     # filter_dirty_pack_response_api(folder_path)

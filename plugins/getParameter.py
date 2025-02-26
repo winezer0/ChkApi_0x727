@@ -3,7 +3,6 @@ try:
 except Exception as e:
     from nodeCommon import *
 
-
 english_parameter_list = [
     r"'([a-zA-Z]+)' parameter",
     r'"([a-zA-Z]+)" parameter',
@@ -32,10 +31,12 @@ english_parameter_list = [
 # english_paramete_patterns = '|'.join(english_parameter_list)
 
 chinese_parameter_list = ["不能为空", "非法的", "参数"]
-chinese_paramete_patterns = r"(['\"]?)([a-zA-Z]+)\1\s*(?:{})|(?:(?:{})\s*['\"]?([a-zA-Z]+)['\"]?)".format('|'.join(chinese_parameter_list), '|'.join(chinese_parameter_list))
+chinese_paramete_patterns = r"(['\"]?)([a-zA-Z]+)\1\s*(?:{})|(?:(?:{})\s*['\"]?([a-zA-Z]+)['\"]?)".format(
+    '|'.join(chinese_parameter_list), '|'.join(chinese_parameter_list))
 
 # 定义用于检查是否包含中文字符的正则表达式
 chinese_pattern = re.compile(r'[\u4e00-\u9fff]+')
+
 
 def extract_info_from_nested_data(data, current_depth=1, target_depth=2):
     # 初始化用来存储找到的键和参数的列表
@@ -86,6 +87,7 @@ def extract_info_from_nested_data(data, current_depth=1, target_depth=2):
             params.extend(nested_params)
     # 返回去重后的键和参数，保持顺序不变
     return remove_duplicates(keys), remove_duplicates(params)
+
 
 def getParameter_api(folder_path):
     parameters = []

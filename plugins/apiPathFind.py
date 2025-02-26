@@ -1,11 +1,10 @@
-
 try:
     from plugins.nodeCommon import *
 except Exception as e:
     from nodeCommon import *
 
 # 增加content-type tag库
-contentTypeList=[#使用 in 逻辑
+contentTypeList = [  # 使用 in 逻辑
     {'key': 'text/html', 'tag': 'html'},
     {'key': 'application/json', 'tag': 'json'},
     {'key': 'text/plain', 'tag': 'txt'},
@@ -243,7 +242,7 @@ contentTypeList=[#使用 in 逻辑
     {'key': 'text/x-plsql', 'tag': 'x-plsql'},
     # {"key":"html","tag":"html"},
 ]
-contentTypeListPure=[x['key'] for x in contentTypeList]#用于过滤url
+contentTypeListPure = [x['key'] for x in contentTypeList]  # 用于过滤url
 
 
 def urlFilter(lst):
@@ -285,10 +284,12 @@ def urlFilter(lst):
         tmp.append(line)
     return tmp
 
-def get_api_path(i, js_urls_queue, js_url, headers, all_api_paths, folder_path, ):
+
+def get_api_path(i, js_urls_queue, js_url, headers, all_api_paths, folder_path, proxy_config):
     try:
         # logger_print_content(f"{js_url}获取JS页面里的API接口")
-        res = requests.get(url=js_url, headers=headers, timeout=TIMEOUT, verify=False, allow_redirects=False)
+        res = requests.get(url=js_url, headers=headers, timeout=TIMEOUT, verify=False, allow_redirects=False,
+                           proxies=proxy_config)
         logger_print_content(f"[线程{i}] 剩下:{js_urls_queue.qsize()} {js_url}获取JS页面里的API接口\t状态码:{res.status_code}")
         # 获取网页源代码
         text = res.text
@@ -357,8 +358,6 @@ def get_api_path(i, js_urls_queue, js_url, headers, all_api_paths, folder_path, 
         api_result = urlFilter(api_result)
         # logger_print_content(f"{js_url}整后得到如下的api接口:{api_result}")
 
-
-
         for _ in api_result:
             new_api_path = urlparse(_).path
             new_api_query = urlparse(_).query
@@ -382,12 +381,14 @@ def get_api_path(i, js_urls_queue, js_url, headers, all_api_paths, folder_path, 
     else:
         logger_print_content(f"{js_url} 无新增api接口\n")
 
-def apiPathFind(i, js_urls_queue, headers, all_api_paths, folder_path, ):
+
+def apiPathFind(i, js_urls_queue, headers, all_api_paths, folder_path, proxy_config):
     while not js_urls_queue.empty():
         js_url = js_urls_queue.get()
-        get_api_path(i, js_urls_queue, js_url, headers, all_api_paths, folder_path, )
+        get_api_path(i, js_urls_queue, js_url, headers, all_api_paths, folder_path, proxy_config)
 
-def apiPathFind_api(js_urls, cookies, folder_path):
+
+def apiPathFind_api(js_urls, cookies, folder_path, proxy_config):
     logger_print_content(f"js_urls: {js_urls}")
     all_api_paths = []
 
@@ -406,7 +407,7 @@ def apiPathFind_api(js_urls, cookies, folder_path):
 
     threads = []
     for i in range(100):
-        t = threading.Thread(target=apiPathFind, args=(i, js_urls_queue, headers, all_api_paths, folder_path, ))
+        t = threading.Thread(target=apiPathFind, args=(i, js_urls_queue, headers, all_api_paths, folder_path, proxy_config,))
         threads.append(t)
         t.start()
         time.sleep(0.2)

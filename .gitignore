@@ -1,3 +1,6 @@
 /.idea
 /result
 *.log
+*.pyc
+*.txt
+*.xlsx

@@ -33,14 +33,14 @@ def filter_base_urls(base_domain, url):
 
 
 # 获取访问url加载的js url
-def indexJsFind(url, cookies):
+def indexJsFind(url, cookies, proxy_config):
     if cookies:
         headers['Cookie'] = cookies
     all_load_url = [{'url': url, 'referer': url, 'url_type': 'base_url'}]
 
     try:
         # 待定：考虑是否要禁用url跳转
-        res = requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False)
+        res = requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False, proxies=proxy_config)
         soup = BeautifulSoup(res.text, 'html.parser')
         scripts = soup.find_all('script')
         js_paths = [script['src'] for script in scripts if script.get('src')]
@@ -250,7 +250,7 @@ def deal_results(excelSavePath, excel, folder_path, filePath_url_info):
     return disposeResults_info
 
 
-def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path):
+def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config):
     js_paths = []
     static_paths = []
 
@@ -270,7 +270,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     try:
         if cookies:
             headers['Cookie'] = cookies
-        requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False)
+        requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False, proxies=proxy_config)
     except Exception as e:
         return
 
@@ -301,11 +301,11 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     # 第一步先获取该页面加载了哪些js和base url
     if chrome == 'on':
         logger_print_content(f"第一步:调用webdriver获取{url}加载的js和no_js url")
-        all_load_url = webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path)
+        all_load_url = webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path, proxy_config)
         logger_print_content(f"[*] all_load_url = {all_load_url}")
     else:
         logger_print_content(f"第一步:访问{url}获取js和no_js url")
-        all_load_url = indexJsFind(url, cookies)
+        all_load_url = indexJsFind(url, cookies, proxy_config)
         logger_print_content(f"[*] all_load_url = {all_load_url}")
 
     # 自动加载js的url列表
@@ -354,7 +354,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     # js_urls = js_load_urls
     # base_urls = base_load_urls
     js_and_staticUrl_info, js_and_staticUrl_alive_info = js_find_api(domain, js_load_urls + no_js_load_urls, cookies,
-                                                                     folder_path, filePath_url_info)
+                                                                     folder_path, filePath_url_info, proxy_config)
     logger_print_content(
         f"[*] 第二步访问加载的js和base url，提取出新的js和static url\n[*] js_and_staticUrl_info = {js_and_staticUrl_info}")
     for _ in js_and_staticUrl_alive_info:
@@ -417,7 +417,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
 
         # 第三步：访问所有js url，从网页源码中匹配出api接口
         logger_print_content(f"第三步：访问所有js url，从网页源码中匹配出api接口")
-        all_api_paths = apiPathFind_api(all_js_urls, cookies, folder_path)
+        all_api_paths = apiPathFind_api(all_js_urls, cookies, folder_path, proxy_config)
         logger_print_content(f"[*] 所有api接口\n[*] all_api_paths = {all_api_paths}")
 
         save_dict_to_excel(excelSavePath, excel, '从所有js里获取到的API_PATH列表', all_api_paths)
@@ -480,7 +480,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
             all_api_url_xml_json_res = []
             # 第五步：梳理所有API接口并访问
             logger_print_content(f"第五步：无参三种形式请求所有API接口")
-            api_url_res = apiUrlReqNoParameter_api(url, api_urls, cookies, folder_path, filePath_url_info)
+            api_url_res = apiUrlReqNoParameter_api(url, api_urls, cookies, folder_path, filePath_url_info, proxy_config)
 
             # 非404，xml和json的api接口
             xml_json_api_url = []
@@ -518,7 +518,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
             if parameters:
                 logger_print_content(f"第七步：有参三种形式请求所有API接口")
                 api_url_res = apiUrlReqWithParameter_api(url, xml_json_api_url, cookies, folder_path, parameters,
-                                                         filePath_url_info)
+                                                         filePath_url_info, proxy_config)
                 save_dict_to_excel(excelSavePath, excel, '有参三种形式请求XML_JSON的API接口响应结果', api_url_res)
 
                 with open(f'{folder_path}/7-1-有参三种形式请求XML_JSON的API接口响应结果.txt', 'at', encoding='utf-8') as f1, open(
@@ -592,15 +592,29 @@ def main():
     # chrome_binary_path = r"C:\ISEC\0X01_Browser\Chrome\Chrome\chrome.exe"
     parse.add_option('--cp', dest='chrome_binary_path', type='str', help='chrome_binary_path', default=r"chrome")
 
+    # 指定代理配置
+    parse.add_option('-p', '--proxy_config', dest='proxy_config', type='str', help='proxy config like http://127.0.0.1:8080', default=None)
+
     options, args = parse.parse_args()
     url, cookies, file, chrome, attackType, noApiScan = options.url, options.cookies, options.file, options.chrome, options.attackType, options.noApiScan
-    chrome_driver_path, chrome_binary_path = options.chrome_driver_path, options.chrome_binary_path
+    chrome_driver_path, chrome_binary_path, proxy_config = options.chrome_driver_path, options.chrome_binary_path, options.proxy_config
+
+    # 格式化输入的Proxy参数 如果输入了代理参数就会变为字符串
+    if proxy_config and isinstance(proxy_config, str):
+        if "socks" in proxy_config or "http" in proxy_config:
+            proxy_config = {
+                'http': proxy_config.replace('https://', 'http://'),
+                'https': proxy_config.replace('https://', 'http://')
+            }
+        else:
+            print(f"代理地址 [{proxy_config}] 格式输入有误,正确格式:Protocol://IP:PORT")
+
     if url:
-        run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path)
+        run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config)
     elif file:
         with open(file, 'rt') as f:
             for url in f.readlines():
-                run_url(url.strip(), cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path)
+                run_url(url.strip(), cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config)
 
 
 if __name__ == '__main__':

@@ -1,13 +1,12 @@
-import json
 import warnings
-from urllib.parse import urlparse
-from traceback import print_exc
+
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.proxy import Proxy, ProxyType
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 try:
     from plugins.nodeCommon import *
@@ -17,7 +16,7 @@ except Exception as e:
 warnings.filterwarnings("ignore")
 
 
-def create_webdriver(cookies, chrome_driver_path=r"chromedriver", chrome_binary_path=r"chrome"):
+def create_webdriver(cookies, chrome_driver_path, chrome_binary_path, proxy_config):
     options = Options()
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -27,8 +26,17 @@ def create_webdriver(cookies, chrome_driver_path=r"chromedriver", chrome_binary_
     options.add_argument('--ignore-certificate-errors')  # 忽略证书错误
     options.add_argument('--ignore-ssl-errors')  # 忽略SSL错误
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-
     options.binary_location = chrome_binary_path
+
+    # 进行chrome代理设置
+    if proxy_config:
+        # 创建代理对象
+        proxyObj = Proxy()
+        proxyObj.proxy_type = ProxyType.MANUAL
+        proxyObj.http_proxy = proxy_config.get("http")
+        proxyObj.ssl_proxy = proxy_config.get("https")
+        # 将代理设置应用到 ChromeOptions
+        proxyObj.add_to_capabilities(options.capabilities)
 
     service = Service(executable_path=chrome_driver_path)
     driver = webdriver.Chrome(service=service, options=options)
@@ -90,9 +98,9 @@ def get_final_url(driver, url):
     return driver.current_url
 
 
-def webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path):
+def webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path, proxy_config):
     all_load_url = []
-    driver = create_webdriver(cookies, chrome_driver_path, chrome_binary_path)
+    driver = create_webdriver(cookies, chrome_driver_path, chrome_binary_path, proxy_config)
     try:
         final_url = get_final_url(driver, url)
         logger_print_content(f"最终跳转URL: {final_url}")
