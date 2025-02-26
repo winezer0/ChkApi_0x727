@@ -22,6 +22,8 @@
 
 ## 0x02 安装
 
+Windows ChromeDriver 下载： https://mirrors.huaweicloud.com/chromedriver/
+
 为了避免踩坑,建议安装在如下环境中
 
 * python3.8及以上，建议VPS环境是ubuntu20，默认是python3.8。
