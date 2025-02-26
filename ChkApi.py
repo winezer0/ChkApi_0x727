@@ -250,16 +250,20 @@ def deal_results(excelSavePath, excel, folder_path, filePath_url_info):
     return disposeResults_info
 
 
-def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config):
+def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config, del_history):
     js_paths = []
     static_paths = []
 
+    # 使用正则表达式替换非字母数字字符为下划线
+    folder_name = re.sub(r'[^a-zA-Z0-9\.]', '_', url)
+    current_path = os.getcwd()
+    folder_path = f"{current_path}/results/{folder_name}"
+
     try:
-        # 使用正则表达式替换非字母数字字符为下划线
-        folder_name = re.sub(r'[^a-zA-Z0-9\.]', '_', url)
-        current_path = os.getcwd()
-        folder_path = f"{current_path}/results/{folder_name}"
-        # 创建目录
+        # 删除历史目录
+        if del_history and os.path.exists(folder_path):
+            shutil.rmtree(folder_path)
+        # 创建新目录
         os.makedirs(folder_path)
     except Exception as e:
         logger_print_content(f"{url} 存在历史扫描记录 {folder_path}")
@@ -582,10 +586,8 @@ def main():
     parse.add_option('-c', '--cookies', dest='cookies', type='str', help='cookies')
     parse.add_option('-f', '--file', dest='file', type='str', help='file to scan')
     parse.add_option('--chrome', dest='chrome', type='str', default='on', help='off关闭chromedriver，默认是on')  #
-    parse.add_option('--at', dest='attackType', type='int', default=0,
-                     help='0 收集+探测\t1 收集\t默认是0')  # 0为收集api接口和请求API接口，1为收集API接口不请求API接口
-    parse.add_option('--na', dest='noApiScan', type='int', default=0,
-                     help='不扫描API接口漏洞，1不扫描，0扫描，默认是0')  # 0为js扫描，1为js+api扫描
+    parse.add_option('--at', dest='attackType', type='int', default=0, help='0 收集+探测\t1 收集\t默认是0')  # 0为收集api接口和请求API接口，1为收集API接口不请求API接口
+    parse.add_option('--na', dest='noApiScan', type='int', default=0, help='不扫描API接口漏洞，1不扫描，0扫描，默认是0')  # 0为js扫描，1为js+api扫描
     # 指定 ChromeDriver 路径
     parse.add_option('--dp', dest='chrome_driver_path', type='str', help='chrome_driver_path', default=r"chromedriver")
     # 指定 Chrome 浏览器路径
@@ -593,11 +595,13 @@ def main():
     parse.add_option('--cp', dest='chrome_binary_path', type='str', help='chrome_binary_path', default=r"chrome")
 
     # 指定代理配置
-    parse.add_option('-p', '--proxy_config', dest='proxy_config', type='str', help='proxy config like http://127.0.0.1:8080', default=None)
+    parse.add_option('-p', dest='proxy_config', type='str', help='proxy config like http://127.0.0.1:8080', default=None)
+    # 删除历史结果
+    parse.add_option('-d', dest='del_history', type='int', default=0, help='删除历史结果目录')  # 0为js扫描，1为js+api扫描
 
     options, args = parse.parse_args()
     url, cookies, file, chrome, attackType, noApiScan = options.url, options.cookies, options.file, options.chrome, options.attackType, options.noApiScan
-    chrome_driver_path, chrome_binary_path, proxy_config = options.chrome_driver_path, options.chrome_binary_path, options.proxy_config
+    chrome_driver_path, chrome_binary_path, proxy_config,del_history = options.chrome_driver_path, options.chrome_binary_path, options.proxy_config, options.del_history
 
     # 格式化输入的Proxy参数 如果输入了代理参数就会变为字符串
     if proxy_config and isinstance(proxy_config, str):
@@ -610,11 +614,11 @@ def main():
             print(f"代理地址 [{proxy_config}] 格式输入有误,正确格式:Protocol://IP:PORT")
 
     if url:
-        run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config)
+        run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config, del_history)
     elif file:
         with open(file, 'rt') as f:
             for url in f.readlines():
-                run_url(url.strip(), cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config)
+                run_url(url.strip(), cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config, del_history)
 
 
 if __name__ == '__main__':
