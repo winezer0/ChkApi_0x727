@@ -17,7 +17,7 @@ except Exception as e:
 warnings.filterwarnings("ignore")
 
 
-def create_webdriver(cookies):
+def create_webdriver(cookies, chrome_driver_path = r"chromedriver", chrome_binary_path = r"chrome"):
     options = Options()
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -28,7 +28,10 @@ def create_webdriver(cookies):
     options.add_argument('--ignore-ssl-errors')  # 忽略SSL错误
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
 
-    service = Service(executable_path=r"/usr/bin/chromedriver")
+
+    options.binary_location = chrome_binary_path
+
+    service = Service(executable_path=chrome_driver_path)
     driver = webdriver.Chrome(service=service, options=options)
 
     # Set user agent
@@ -86,9 +89,9 @@ def get_final_url(driver, url):
     return driver.current_url
 
 
-def webdriverFind(url, cookies):
+def webdriverFind(url, cookies, chrome_driver_path , chrome_binary_path):
     all_load_url = []
-    driver = create_webdriver(cookies)
+    driver = create_webdriver(cookies, chrome_driver_path , chrome_binary_path)
     try:
         final_url = get_final_url(driver, url)
         logger_print_content(f"最终跳转URL: {final_url}")
