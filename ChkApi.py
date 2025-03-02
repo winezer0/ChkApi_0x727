@@ -1,3 +1,4 @@
+import argparse
 import os
 from optparse import OptionParser
 from collections import Counter
@@ -250,7 +251,7 @@ def deal_results(excelSavePath, excel, folder_path, filePath_url_info):
     return disposeResults_info
 
 
-def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config, del_history):
+def run_url(url, cookies, chrome, attackMode, apiVulnSan, driverPath, ChromePath, proxyConfig, deleteHistory):
     js_paths = []
     static_paths = []
 
@@ -261,7 +262,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
 
     try:
         # 删除历史目录
-        if del_history and os.path.exists(folder_path):
+        if deleteHistory and os.path.exists(folder_path):
             shutil.rmtree(folder_path)
         # 创建新目录
         os.makedirs(folder_path)
@@ -274,7 +275,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     try:
         if cookies:
             headers['Cookie'] = cookies
-        requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False, proxies=proxy_config)
+        requests.get(url=url, headers=headers, timeout=TIMEOUT, verify=False, proxies=proxyConfig)
     except Exception as e:
         return
 
@@ -303,13 +304,13 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     all_api_url_xml_json_res = []
 
     # 第一步先获取该页面加载了哪些js和base url
-    if chrome == 'on':
+    if chrome:
         logger_print_content(f"第一步:调用webdriver获取{url}加载的js和no_js url")
-        all_load_url = webdriverFind(url, cookies, chrome_driver_path, chrome_binary_path, proxy_config)
+        all_load_url = webdriverFind(url, cookies, driverPath, ChromePath, proxyConfig)
         logger_print_content(f"[*] all_load_url = {all_load_url}")
     else:
         logger_print_content(f"第一步:访问{url}获取js和no_js url")
-        all_load_url = indexJsFind(url, cookies, proxy_config)
+        all_load_url = indexJsFind(url, cookies, proxyConfig)
         logger_print_content(f"[*] all_load_url = {all_load_url}")
 
     # 自动加载js的url列表
@@ -358,7 +359,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     # js_urls = js_load_urls
     # base_urls = base_load_urls
     js_and_staticUrl_info, js_and_staticUrl_alive_info = js_find_api(domain, js_load_urls + no_js_load_urls, cookies,
-                                                                     folder_path, filePath_url_info, proxy_config)
+                                                                     folder_path, filePath_url_info, proxyConfig)
     logger_print_content(
         f"[*] 第二步访问加载的js和base url，提取出新的js和static url\n[*] js_and_staticUrl_info = {js_and_staticUrl_info}")
     for _ in js_and_staticUrl_alive_info:
@@ -417,11 +418,11 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
         #         static_paths.append(staticUrl_path)
         #         f3.writelines(f"{staticUrl_path}\n")
 
-    if noApiScan == 0:
+    if apiVulnSan:
 
         # 第三步：访问所有js url，从网页源码中匹配出api接口
         logger_print_content(f"第三步：访问所有js url，从网页源码中匹配出api接口")
-        all_api_paths = apiPathFind_api(all_js_urls, cookies, folder_path, proxy_config)
+        all_api_paths = apiPathFind_api(all_js_urls, cookies, folder_path, proxyConfig)
         logger_print_content(f"[*] 所有api接口\n[*] all_api_paths = {all_api_paths}")
 
         save_dict_to_excel(excelSavePath, excel, '从所有js里获取到的API_PATH列表', all_api_paths)
@@ -475,7 +476,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
             for api_url in api_info['api_urls']:
                 f6.writelines(f"{api_url}\n")
 
-        if attackType == 0:
+        if attackMode == 0:
             api_urls = api_info['api_urls']
 
             if len(api_urls) > 200000:
@@ -484,7 +485,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
             all_api_url_xml_json_res = []
             # 第五步：梳理所有API接口并访问
             logger_print_content(f"第五步：无参三种形式请求所有API接口")
-            api_url_res = apiUrlReqNoParameter_api(url, api_urls, cookies, folder_path, filePath_url_info, proxy_config)
+            api_url_res = apiUrlReqNoParameter_api(url, api_urls, cookies, folder_path, filePath_url_info, proxyConfig)
 
             # 非404，xml和json的api接口
             xml_json_api_url = []
@@ -522,7 +523,7 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
             if parameters:
                 logger_print_content(f"第七步：有参三种形式请求所有API接口")
                 api_url_res = apiUrlReqWithParameter_api(url, xml_json_api_url, cookies, folder_path, parameters,
-                                                         filePath_url_info, proxy_config)
+                                                         filePath_url_info, proxyConfig)
                 save_dict_to_excel(excelSavePath, excel, '有参三种形式请求XML_JSON的API接口响应结果', api_url_res)
 
                 with open(f'{folder_path}/7-1-有参三种形式请求XML_JSON的API接口响应结果.txt', 'at', encoding='utf-8') as f1, open(
@@ -573,52 +574,65 @@ def run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chr
     return getJsUrl_info
 
 
+def args_parse():
+    # 创建解析器
+    parser = argparse.ArgumentParser(description='爬取URL信息')
+    # 添加参数
+    parser.add_argument('-u', '--url', help='指定 目标url')
+    parser.add_argument('-f', '--file', help='指定 目标url文件')
+    parser.add_argument('-c', '--cookies', help='指定 请求cookies')
+
+    parser.add_argument('-m', '--mode', dest='attackMode', type=int, default=0, choices=[0, 1], help='0 收集探测模式 1仅收集模式')
+    # 0为收集api接口和请求API接口，1为收集API接口不请求API接口
+
+    parser.add_argument('--nc', dest='chromeMode', action="store_false", help='不启用 chrome driver, 默认启用')
+
+    parser.add_argument('--ns', dest='apiVulnSan', action="store_false",  help='不启用API漏洞扫描功能, 默认启用')  # 0为js扫描，1为js+api扫描
+
+    parser.add_argument('--cp', dest='chromePath', default="chrome.exe", help='指定 Chrome 浏览器程序 路径')
+    parser.add_argument('--dp', dest='driverPath', default="chromedriver.exe", help='指定 Chrome 驱动程序 路径')
+
+    parser.add_argument('-p', dest='proxyConfig', default=None, help='浏览器及HTTP代理, 常用 http://127.0.0.1:8080')
+    parser.add_argument('-d', dest='deleteHistory', action="store_true", help='删除历史结果目录, 防止无法启动任务')
+
+    # 解析参数
+    args = parser.parse_args()
+    return args
+
+
 def main():
-    usage = '\n\t' \
-            'python3 %prog -u http://www.xxx.com\n\t' \
-            'python3 %prog -u http://www.xxx.com -c xxxxxxxxxxx\n\t' \
-            'python3 %prog -f urls.txt\n\t' \
-            'python3 %prog -u http://www.xxx.com --chrome off\n\t' \
-            'python3 %prog -u http://www.xxx.com --at 1\n\t' \
-            'python3 %prog -u http://www.xxx.com --na 1\n\t'
-    parse = OptionParser(usage=usage)
-    parse.add_option('-u', '--url', dest='url', type='str', help='要跑的目标url')
-    parse.add_option('-c', '--cookies', dest='cookies', type='str', help='cookies')
-    parse.add_option('-f', '--file', dest='file', type='str', help='file to scan')
-    parse.add_option('--chrome', dest='chrome', type='str', default='on', help='off关闭chromedriver，默认是on')  #
-    parse.add_option('--at', dest='attackType', type='int', default=0, help='0 收集+探测\t1 收集\t默认是0')  # 0为收集api接口和请求API接口，1为收集API接口不请求API接口
-    parse.add_option('--na', dest='noApiScan', type='int', default=0, help='不扫描API接口漏洞，1不扫描，0扫描，默认是0')  # 0为js扫描，1为js+api扫描
-    # 指定 ChromeDriver 路径
-    parse.add_option('--dp', dest='chrome_driver_path', type='str', help='chrome_driver_path', default=r"chromedriver")
-    # 指定 Chrome 浏览器路径
-    # chrome_binary_path = r"C:\ISEC\0X01_Browser\Chrome\Chrome\chrome.exe"
-    parse.add_option('--cp', dest='chrome_binary_path', type='str', help='chrome_binary_path', default=r"chrome")
+    # 解析参数
+    args = args_parse()
 
-    # 指定代理配置
-    parse.add_option('-p', dest='proxy_config', type='str', help='proxy config like http://127.0.0.1:8080', default=None)
-    # 删除历史结果
-    parse.add_option('-d', dest='del_history', type='int', default=0, help='删除历史结果目录')  # 0为js扫描，1为js+api扫描
+    # 获取参数值
+    url = args.url
+    file = args.file
+    cookies = args.cookies
+    attackMode = args.attackMode
 
-    options, args = parse.parse_args()
-    url, cookies, file, chrome, attackType, noApiScan = options.url, options.cookies, options.file, options.chrome, options.attackType, options.noApiScan
-    chrome_driver_path, chrome_binary_path, proxy_config,del_history = options.chrome_driver_path, options.chrome_binary_path, options.proxy_config, options.del_history
+    chromeMode = args.chromeMode
+    apiVulnSan = args.apiVulnSan
+    driverPath = args.driverPath
+    chromePath = args.chromePath
+    proxyConfig = args.proxyConfig
+    deleteHistory = args.deleteHistory
 
     # 格式化输入的Proxy参数 如果输入了代理参数就会变为字符串
-    if proxy_config and isinstance(proxy_config, str):
-        if "socks" in proxy_config or "http" in proxy_config:
-            proxy_config = {
-                'http': proxy_config.replace('https://', 'http://'),
-                'https': proxy_config.replace('https://', 'http://')
+    if proxyConfig and isinstance(proxyConfig, str):
+        if "socks" in proxyConfig or "http" in proxyConfig:
+            proxyConfig = {
+                'http': proxyConfig.replace('https://', 'http://'),
+                'https': proxyConfig.replace('https://', 'http://')
             }
         else:
-            print(f"代理地址 [{proxy_config}] 格式输入有误,正确格式:Protocol://IP:PORT")
+            print(f"代理地址 [{proxyConfig}] 格式输入有误,正确格式:Protocol://IP:PORT")
 
     if url:
-        run_url(url, cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config, del_history)
+        run_url(url, cookies, chromeMode, attackMode, apiVulnSan, driverPath, chromePath, proxyConfig, deleteHistory)
     elif file:
         with open(file, 'rt') as f:
             for url in f.readlines():
-                run_url(url.strip(), cookies, chrome, attackType, noApiScan, chrome_driver_path, chrome_binary_path, proxy_config, del_history)
+                run_url(url.strip(), cookies, chromeMode, attackMode, apiVulnSan, driverPath, chromePath, proxyConfig, deleteHistory)
 
 
 if __name__ == '__main__':
